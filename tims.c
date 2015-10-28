@@ -448,7 +448,6 @@ BOOLEAN init_global_env() {
   make_primitive("symbol?", OP_SYMBOL);
   make_primitive("null?", OP_NULL);
   make_primitive("boolean?", OP_BOOLEAN);
-  make_primitive("body", OP_BODY);
 
   in_stream = fopen("std_lib.l", "r");
   out_stream = fopen("/dev/null", "w");
@@ -564,7 +563,7 @@ void eval_current_frame() {
     // This should never be true when called from the interpreter, only possible
     // if apply is called by the user.
     // this does not allow nullary functions.
-    if (!is_pair(current_args)) {
+    if (!is_pair(current_args) && !is_null(current_args)) {
       return error_msg("ERROR -- second arg to apply must be a list");
     }
     current_res = apply_func(current_args);
@@ -572,10 +571,6 @@ void eval_current_frame() {
   case OP_BIND:
     current_res = nil_ptr;
     bind_funargs(current_env, current_func, current_args);
-    break;
-  case OP_BODY:
-    print_lispobj(proc_body(car(current_args)));
-    current_res = nil_ptr;
     break;
   case OP_LET:
     current_res = apply_let();
