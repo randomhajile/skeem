@@ -442,6 +442,9 @@ BOOLEAN init_global_env() {
   make_primitive("define", OP_DEFINE);
   make_primitive("quote", OP_QUOTE);
   make_primitive("if", OP_IF);
+  make_primitive("cond", OP_COND);
+  make_primitive("or", OP_OR);
+  make_primitive("and", OP_AND);
   make_primitive("=", OP_EQ);
   make_primitive("eq?", OP_EQP);
   make_primitive("<", OP_LT);
@@ -576,6 +579,7 @@ void eval_current_frame() {
   case OP_APPLY:
     // This should never be true when called from the interpreter, only possible
     // if apply is called by the user.
+    // this does not allow nullary functions.
     if (!is_pair(current_args)) {
       return error_msg("ERROR -- second arg to apply must be a list");
     }
@@ -610,6 +614,15 @@ void eval_current_frame() {
     break;
   case OP_IF:
     current_res = apply_if();
+    break;
+  case OP_COND:
+    current_res = apply_cond();
+    break;
+  case OP_OR:
+    current_res = apply_or();
+    break;
+  case OP_AND:
+    current_res = apply_and();
     break;
   case OP_EQP:
     if (list_length(current_args) != 2)
@@ -900,6 +913,13 @@ void eval_args(LISP_OBJ_PTR args) {
     push();
     args = nil_ptr;
     break;
+  case OP_COND:
+    next_ret = &caar(args);
+    next_code = OP_EVAL;
+    next_env = current_env;
+    next_args = caar(args);
+    push();
+    return;
   case OP_SET:
     args = cdr(args);
     break;
@@ -909,6 +929,13 @@ void eval_args(LISP_OBJ_PTR args) {
     next_code = OP_EVAL;
     next_env = current_env;
     next_args = args;
+    push();
+    return;
+  case OP_OR:
+    next_ret = &(car(current_args));
+    next_code = OP_EVAL;
+    next_args = car(current_args);
+    next_env = current_env;
     push();
     return;
   case OP_APPLY:
@@ -1276,6 +1303,56 @@ LISP_OBJ_PTR apply_if() {
     current_res = nil_ptr;
 
   return NULL;
+}
+
+LISP_OBJ_PTR apply_or() {
+  if (is_null(current_args))
+    return false_ptr;
+  else if (is_true(car(current_args)))
+    return true_ptr;
+  // no need to alloc another frame here.
+  else if (is_null(cdr(current_args)))
+    return false_ptr;
+
+  // we need to eval or on the tail
+  current_code = OP_OR;
+  current_args = cdr(current_args);
+  eval_args(cdr(current_args));
+  return NULL;
+}
+
+LISP_OBJ_PTR apply_and() {
+  if (is_null(current_args))
+    return true_ptr;
+  else if (!is_true(car(current_args)))
+    return false_ptr;
+  else if (is_null(cdr(current_args)))
+    return true_ptr;
+
+  // we need to eval and on the tail
+  current_code = OP_AND;
+  current_args = cdr(current_args);
+  eval_args(current_args);
+  return NULL;  
+}
+
+LISP_OBJ_PTR apply_cond() {
+  if (is_true(caar(current_args))) {
+    current_code = OP_EVAL;
+    current_args = cadar(current_args);
+    return NULL;
+  }
+  // we need to catch the else before it gets to the evaluator.
+  else if (is_pair(cdr(current_args)) && is_symbol(caadr(current_args)) && !strcmp(symbol_value(caadr(current_args)), "else")) {
+    current_code = OP_EVAL;
+    current_args = car(cdadr(current_args));
+    return NULL;    
+  }
+  else if (is_null(cdr(current_args)))
+    return nil_ptr;
+  current_code = OP_COND;
+  current_args = cdr(current_args);
+  eval_args(current_args);
 }
 
 
