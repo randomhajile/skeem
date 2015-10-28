@@ -331,20 +331,6 @@ LISP_OBJ_PTR read_sexp(LISP_OBJ_PTR read_to) {
     // (quote (1 2 3)) and 'a into (quote a).
     // res->form = CONS_FORM;
     form(res) = CONS_FORM;
-    // we need to explicitly set the car of these things to NULL, or else
-    // we run the risk of segfaulting if we GC.
-    // res->value.cons.car = NULL;
-    // res->value.cons.cdr = NULL;
-    // res->value.cons.car = alloc_obj();
-    // res->value.cons.car->form = SYMBOL_FORM;
-    // res->value.cons.car->value.atom.symbol_value = malloc((strlen("quote") + 1)*sizeof(char));
-    // strcpy(res->value.cons.car->value.atom.symbol_value, "quote");
-    // res->value.cons.cdr = alloc_obj();
-    // res->value.cons.cdr->form = CONS_FORM;
-    // res->value.cons.cdr->value.cons.car = alloc_obj();
-    // res->value.cons.cdr->value.cons.cdr = nil_ptr;
-    // as silly as it is to do it this way, this handles the nil_ptr case
-    // res->value.cons.cdr->value.cons.car = read(res->value.cons.cdr->value.cons.car);
     car(res) = NULL;
     cdr(res) = NULL;
     car(res) = alloc_obj();
@@ -464,9 +450,7 @@ BOOLEAN init_global_env() {
   make_primitive("boolean?", OP_BOOLEAN);
   make_primitive("body", OP_BODY);
 
-  // in_stream = stdin;
   in_stream = fopen("std_lib.l", "r");
-  // out_stream = stdout;
   out_stream = fopen("/dev/null", "w");
 
   return TRUE;
