@@ -428,7 +428,6 @@ BOOLEAN init_global_env() {
   make_primitive("define", OP_DEFINE);
   make_primitive("quote", OP_QUOTE);
   make_primitive("if", OP_IF);
-  make_primitive("cond", OP_COND);
   make_primitive("or", OP_OR);
   make_primitive("and", OP_AND);
   make_primitive("=", OP_EQ);
@@ -569,6 +568,7 @@ void eval_current_frame() {
     current_res = apply_func(current_args);
     break;
   case OP_BIND:
+    // not user accessible
     current_res = nil_ptr;
     bind_funargs(current_env, current_func, current_args);
     break;
@@ -593,9 +593,6 @@ void eval_current_frame() {
     break;
   case OP_IF:
     current_res = apply_if();
-    break;
-  case OP_COND:
-    current_res = apply_cond();
     break;
   case OP_OR:
     current_res = apply_or();
@@ -867,6 +864,9 @@ LISP_OBJ_PTR eval_lispobj(LISP_OBJ_PTR objp) {
 }
 
 void eval_args(LISP_OBJ_PTR args) {
+  if (is_null(current_args))
+    return;
+
   switch (current_code) {
   case OP_QUOTE:
     current_args = car(current_args);
@@ -892,13 +892,6 @@ void eval_args(LISP_OBJ_PTR args) {
     push();
     args = nil_ptr;
     break;
-  case OP_COND:
-    next_ret = &caar(args);
-    next_code = OP_EVAL;
-    next_env = current_env;
-    next_args = caar(args);
-    push();
-    return;
   case OP_SET:
     args = cdr(args);
     break;
@@ -1004,7 +997,6 @@ LISP_OBJ_PTR apply_func(LISP_OBJ_PTR objp) {
   car(current_args) = hack;
   cdr(current_args) = NULL;
   cdr(current_args) = alloc_obj();
-  // LISP_OBJ_PTR args = copy_list(cdr(objp), cdr(current_args));
   LISP_OBJ_PTR args = copy_list(objp, current_args);
   current_args = car(current_args);
 
@@ -1139,6 +1131,7 @@ void eval_funargs(ENVIRONMENT_PTR env,      // where to store results
   next_args = alloc_obj();
   form(next_args) = CONS_FORM;
   car(next_args) = proc_restparams(func);
+  // TODO: there's a risk of GC destroying args here.
   cdr(next_args) = alloc_obj();
   form(cdr(next_args)) = CONS_FORM;
   cddr(next_args) = nil_ptr;
@@ -1314,27 +1307,6 @@ LISP_OBJ_PTR apply_and() {
   eval_args(current_args);
   return NULL;  
 }
-
-LISP_OBJ_PTR apply_cond() {
-  if (is_true(caar(current_args))) {
-    current_code = OP_EVAL;
-    current_args = cadar(current_args);
-    return NULL;
-  }
-  // we need to catch the else before it gets to the evaluator.
-  else if (is_pair(cdr(current_args)) && is_symbol(caadr(current_args)) && !strcmp(symbol_value(caadr(current_args)), "else")) {
-    current_code = OP_EVAL;
-    current_args = car(cdadr(current_args));
-    return NULL;    
-  }
-  else if (is_null(cdr(current_args)))
-    return nil_ptr;
-  current_code = OP_COND;
-  current_args = cdr(current_args);
-  eval_args(current_args);
-}
-
-
 
 int main() {
   init_char_table();
