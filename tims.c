@@ -282,45 +282,30 @@ LISP_OBJ_PTR read_sexp(LISP_OBJ_PTR read_to) {
 
   switch (current_token.code) {
   case TOK_LPAREN:
-    // res->form = CONS_FORM;
     form(res) = CONS_FORM;
     return read_list(res);
   case TOK_INT:
-    // res->form = INT_FORM;
-    // res->value.atom.int_value = current_token.value.integer;
     form(res) = INT_FORM;
     int_value(res) = current_token.value.integer;
     break;
   case TOK_FLOAT:
-    // res->form = FLOAT_FORM;
-    // res->value.atom.float_value = current_token.value.real;
     form(res) = FLOAT_FORM;
     float_value(res) = current_token.value.real;
     break;
   case TOK_STRING:
-    // res->form = STRING_FORM;
-    // res->value.atom.string_value = malloc(strlen(current_token.value.string)+1);
-    // strcpy(res->value.atom.string_value, current_token.value.string);
     form(res) = STRING_FORM;
     string_value(res) = malloc(strlen(current_token.value.string)+1);
     strcpy(string_value(res), current_token.value.string);
     break;
   case TOK_BOOL:
-    // res->form = BOOLEAN_FORM;
-    // res->value.atom.bool_value = current_token.value.bool;
     form(res) = BOOLEAN_FORM;
     bool_value(res) = current_token.value.bool;
     break;
   case TOK_CHAR:
-    // res->form = CHAR_FORM;
-    // res->value.atom.char_value = current_token.value.character;
     form(res) = CHAR_FORM;
     char_value(res) = current_token.value.character;
     break;
   case TOK_SYMBOL:
-    // res->form = SYMBOL_FORM;
-    // res->value.atom.symbol_value = malloc(strlen(current_token.value.string)+1);
-    // strcpy(res->value.atom.symbol_value, current_token.value.symbol);
     form(res) = SYMBOL_FORM;
     symbol_value(res) = malloc(strlen(current_token.value.string)+1);
     strcpy(symbol_value(res), current_token.value.symbol);
@@ -329,7 +314,6 @@ LISP_OBJ_PTR read_sexp(LISP_OBJ_PTR read_to) {
     // We're treating 'foo as syntactic sugar that maps to (quote foo).
     // this means we have to take something like '(1 2 3) and transform it into
     // (quote (1 2 3)) and 'a into (quote a).
-    // res->form = CONS_FORM;
     form(res) = CONS_FORM;
     car(res) = NULL;
     cdr(res) = NULL;
