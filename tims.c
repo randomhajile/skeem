@@ -232,7 +232,7 @@ void get_number() {
   int num_chars = 0;
   BOOLEAN saw_decimal = FALSE;
   BOOLEAN is_exponential = FALSE;
-  
+
   if (current_char == '-') {
     num_string[num_chars++] = '-';
     get_char();
@@ -265,7 +265,7 @@ void get_number() {
   } else {
     current_token.code = TOK_INT;
     current_token.value.integer = atoi(num_string);
-  }  
+  }
 }
 
 /************************/
@@ -1283,7 +1283,7 @@ LISP_OBJ_PTR apply_and() {
   current_code = OP_AND;
   current_args = cdr(current_args);
   eval_args(current_args);
-  return NULL;  
+  return NULL;
 }
 
 int main() {
