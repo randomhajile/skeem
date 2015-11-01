@@ -49,7 +49,6 @@ LISP_OBJ_PTR apply_if();
 LISP_OBJ_PTR apply_let();
 LISP_OBJ_PTR apply_or();
 LISP_OBJ_PTR apply_and();
-LISP_OBJ_PTR apply_cond();
 void bind_funargs(ENVIRONMENT_PTR env, LISP_OBJ_PTR func, LISP_OBJ_PTR args);
 
 /**************************/
