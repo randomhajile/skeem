@@ -32,7 +32,6 @@ LISP_OBJ_PTR false_ptr = &_false;
 LISP_OBJ_PTR true_ptr = &_true;
 ENVIRONMENT global_env;
 ENVIRONMENT_PTR global_env_ptr = &global_env;
-ENVIRONMENT_PTR debug;
 
 /**************/
 /* For lexing */
@@ -150,17 +149,18 @@ char get_char() {
   // check to see if we need to read into the input buffer
   if (next_char >= end_of_line) {
     // the input buffer is empty and we need to read more or stop
-    // if (fgets(next_char = current_line, MAX_LINE_SIZE, stdin) == NULL) {
+    if (feof(in_stream)) {
+      fclose(in_stream);
+      fclose(out_stream);
+      in_stream = stdin;
+      out_stream = stdout;
+      fprintf(out_stream, PROMPT);
+    }
+    strcpy(current_line, "\n");
     if (fgets(next_char = current_line, MAX_LINE_SIZE, in_stream) == NULL) {
       if (in_stream == stdin) {
         fprintf(stderr, "Bye for now!\n");
         exit(0);
-      } else {
-        fclose(in_stream);
-        fclose(out_stream);
-        in_stream = stdin;
-        out_stream = stdout;
-        fprintf(out_stream, PROMPT);
       }
     }
     end_of_line = current_line + strlen(current_line);
@@ -894,20 +894,12 @@ void eval_args(LISP_OBJ_PTR args) {
       next_env = current_env;
       push();
     } else {
-      /* current_func = car(args); */
-      /* next_code = OP_EVAL; */
-      /* next_ret = &current_args; */
-      /* next_args = cadr(current_args); */
-      /* next_env = current_env; */
-      /* push() */
-
       current_code = OP_BEGIN;
       current_func = car(args);
       current_args = proc_body(current_func);
       current_env = alloc_environment();
       current_env->in_use = TRUE;
       current_env->enclosing_env = proc_env(current_func);
-      debug = current_env;
       next_code = OP_BIND;
       next_ret = NULL;
       next_res = NULL;
@@ -951,19 +943,15 @@ void error() {
 
 LISP_OBJ_PTR apply_func(LISP_OBJ_PTR objp) {
   LISP_OBJ_PTR func = current_func;
-  // hack hack hack
-  // TODO: replace this with an OP_SAVE
 
-  LISP_OBJ_PTR hack = current_args;
-  current_args = alloc_obj();
-  form(current_args) = CONS_FORM;
-  car(current_args) = hack;
-  cdr(current_args) = NULL;
-  cdr(current_args) = alloc_obj();
-  LISP_OBJ_PTR args = copy_list(objp, current_args);
-  current_args = car(current_args);
+  next_code = OP_SAVE;
+  next_ret = NULL;
+  next_args = current_args;
+  push();
 
-  // end hack hack hack
+  frame_args((current_frame-1)) = alloc_obj();
+  LISP_OBJ_PTR args = copy_list(objp, frame_args((current_frame-1)));
+  pop();
 
   if (!is_proc(func)) {
     error_msg("ERROR -- not a function.");
@@ -1015,11 +1003,10 @@ void eval_funargs(ENVIRONMENT_PTR env,      // where to store results
   while (req_params != nil_ptr && args != nil_ptr) {
     next_code = OP_DEFINE;
     next_env = env;
-    // next_args = define_args;
     next_ret = NULL;
-    // doesn't work if arg n+1's value depends on arg n's value.
-    define_args = alloc_obj();
-    next_args = define_args;
+    push();
+    current_args = alloc_obj();
+    define_args = current_args;
     form(define_args) = CONS_FORM;
     car(define_args) = car(req_params);
     cdr(define_args) = NULL;
@@ -1028,7 +1015,6 @@ void eval_funargs(ENVIRONMENT_PTR env,      // where to store results
     form(cdr(define_args)) = CONS_FORM;
     cadr(define_args) = car(args);
     cddr(define_args) = nil_ptr;
-    push();
 
     next_code = OP_EVAL;
     next_env = eval_env;
@@ -1053,9 +1039,9 @@ void eval_funargs(ENVIRONMENT_PTR env,      // where to store results
     next_code = OP_DEFINE;
     next_env = env;
     next_ret = NULL;
-    // doesn't work if arg n+1's value depends on arg n's value.
-    define_args = alloc_obj();
-    next_args = define_args;
+    push();
+    current_args = alloc_obj();
+    define_args = current_args;
     form(define_args) = CONS_FORM;
     car(define_args) = car(opt_params);
     cdr(define_args) = NULL;
@@ -1068,7 +1054,6 @@ void eval_funargs(ENVIRONMENT_PTR env,      // where to store results
     else
       cadr(define_args) = nil_ptr;
     cddr(define_args) = nil_ptr;
-    push();
 
     next_code = OP_EVAL;
     next_env = eval_env;
@@ -1091,22 +1076,21 @@ void eval_funargs(ENVIRONMENT_PTR env,      // where to store results
   next_code = OP_DEFINE;
   next_env = env;
   next_ret = NULL;
-  next_args = alloc_obj();
-  form(next_args) = CONS_FORM;
-  car(next_args) = proc_restparams(func);
+  push();
+  current_args = alloc_obj();
+  form(current_args) = CONS_FORM;
+  car(current_args) = proc_restparams(func);
   // TODO: there's a risk of GC destroying args here.
-  cdr(next_args) = alloc_obj();
-  form(cdr(next_args)) = CONS_FORM;
-  cddr(next_args) = nil_ptr;
+  cdr(current_args) = alloc_obj();
+  form(cdr(current_args)) = CONS_FORM;
+  cddr(current_args) = nil_ptr;
   if (is_null(args)) {
-    cadr(next_args) = nil_ptr;
-    push();
+    cadr(current_args) = nil_ptr;
     return;
   }
-  cadr(next_args) = alloc_obj();
-  form(cadr(next_args)) = CONS_FORM;
-  LISP_OBJ_PTR rest_list = cadr(next_args);
-  push();
+  cadr(current_args) = alloc_obj();
+  form(cadr(current_args)) = CONS_FORM;
+  LISP_OBJ_PTR rest_list = cadr(current_args);
   while (TRUE) {
     next_code = OP_EVAL;
     next_env = eval_env;
@@ -1138,9 +1122,9 @@ void bind_funargs(ENVIRONMENT_PTR env,      // where to store results
     next_code = OP_DEFINE;
     next_env = env;
     next_ret = NULL;
-    // doesn't work if arg n+1's value depends on arg n's value.
-    define_args = alloc_obj();
-    next_args = define_args;
+    push();
+    current_args = alloc_obj();
+    define_args = current_args;
     form(define_args) = CONS_FORM;
     car(define_args) = car(req_params);
     cdr(define_args) = NULL;
@@ -1149,7 +1133,6 @@ void bind_funargs(ENVIRONMENT_PTR env,      // where to store results
     form(cdr(define_args)) = CONS_FORM;
     cadr(define_args) = car(args);
     cddr(define_args) = nil_ptr;
-    push();
 
     req_params = cdr(req_params);
     args = cdr(args);
