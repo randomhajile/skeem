@@ -180,7 +180,7 @@ void put_back() {
 
 void skip_comment() {
   while (get_char() != '\n'){
-    
+
   }
 }
 
@@ -647,46 +647,36 @@ void eval_current_frame() {
     break;
   case OP_CAR:
     while (args != nil_ptr) {
-      if (num_args) {
-        fprintf(stderr, "ERROR -- car takes precisely one argument");
-        error();
-        return;
-      }
-      if (!is_pair(car(args))) {
-        fprintf(stderr, "ERROR -- argument for car must be a pair");
-        error();
-        return;        
-      }
+      if (num_args)
+        return error_msg("ERROR -- car takes precisely one argument");
+
+      if (!is_pair(car(args)))
+        return error_msg("ERROR -- argument for car must be a pair");
+
       args = cdr(args);
       ++num_args;
     }
-    if (!num_args) {
-      fprintf(stderr, "ERROR -- car takes precisely one argument");
-      error();
-      return;
-    }
+    if (!num_args)
+      return error_msg("ERROR -- car takes precisely one argument");
+
     current_res = caar(current_args);
     break;
   case OP_CDR:
     while (args != nil_ptr) {
       if (num_args) {
-        fprintf(stderr, "ERROR -- cdr takes precisely one argument");
-        error();
+        error_msg("ERROR -- cdr takes precisely one argument");
         return;
       }
-      if (!is_pair(car(args))) {
-        fprintf(stderr, "ERROR -- argument for cdr must be a pair");
-        error();
-        return;        
-      }
+      if (!is_pair(car(args)))
+        return error_msg("ERROR -- argument for cdr must be a pair");
+
       args = cdr(args);
       ++num_args;
     }
-    if (!num_args) {
-      fprintf(stderr, "ERROR -- cdr takes precisely one argument");
-      error();
-      return;
-    }
+
+    if (!num_args)
+      return error_msg("ERROR -- cdr takes precisely one argument");
+
     current_res = cdar(current_args);
     break;
   case OP_CONS:
@@ -694,46 +684,36 @@ void eval_current_frame() {
       ++num_args;
       args = cdr(args);
     }
-    if (num_args != 2) {
-      fprintf(stderr, "ERROR -- cons takes precisely two arguments");
-      error();
-      return;
-    }
+    if (num_args != 2)
+      return error_msg("ERROR -- cons takes precisely two arguments");
+
     current_res = cons(car(current_args), cadr(current_args));
     break;
   case OP_SETCAR:
     // similar comments to above
-    if (!is_pair(car(args))) {
-      fprintf(stderr, "ERROR -- first arg to set-car! must be a pair");
-      error();
-      return;
-    }
+    if (!is_pair(car(args)))
+      return error_msg("ERROR -- first arg to set-car! must be a pair");
+
     while (args != nil_ptr) {
       ++num_args;
       args = cdr(args);
     }
-    if (num_args != 2) {
-      fprintf(stderr, "ERROR -- set-car! takes precisely two arguments");
-      error();
-      return;      
-    }
+    if (num_args != 2)
+      return error_msg("ERROR -- set-car! takes precisely two arguments");
+
     current_res = set_car(car(current_args), car(cdr(current_args)));
     break;
   case OP_SETCDR:
-    if (!is_pair(car(args))) {
-      fprintf(stderr, "ERROR -- first arg to set-cdr! must be a pair");
-      error();
-      return;
-    }
+    if (!is_pair(car(args)))
+      return error_msg("ERROR -- first arg to set-cdr! must be a pair");
+
     while (args != nil_ptr) {
       ++num_args;
       args = cdr(args);
     }
-    if (num_args != 2) {
-      fprintf(stderr, "ERROR -- set-cdr! takes precisely two arguments");
-      error();
-      return;      
-    }
+    if (num_args != 2)
+      return error_msg("ERROR -- set-cdr! takes precisely two arguments");
+
     current_res = set_cdr(car(current_args), car(cdr(current_args)));
     break;
   case OP_DEFINE:
