@@ -91,7 +91,7 @@ SYMTAB_NODE_PTR create_symtab_node_ptr() {
   if (new_nodep == NULL) {
     // TODO: I don't exactly know how to handle this situation.
     fprintf(stderr, "\nERROR -- Out of memory.\n");
-    error(1);
+    exit(0);
   }
   new_nodep->left = NULL;
   new_nodep->right = NULL;

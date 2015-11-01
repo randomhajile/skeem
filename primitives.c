@@ -1,10 +1,12 @@
 #include "primitives.h"
 #include <stdio.h>
+#include <string.h>
 
 // globals
 extern LISP_OBJ_PTR nil_ptr;
 extern LISP_OBJ_PTR true_ptr;
 extern LISP_OBJ_PTR false_ptr;
+extern void print_lispobj();
 extern FILE *out_stream;
 
 // for dealing with arithmetic
@@ -158,42 +160,6 @@ LISP_OBJ_PTR divide(LISP_OBJ_PTR args) {
   float_value(res) = float_res;
   return res;
 }
-
-/* LISP_OBJ_PTR define(ENVIRONMENT_PTR env, LISP_OBJ_PTR args) { */
-/*   char *var; */
-/*   LISP_OBJ_PTR to_def = car(args); */
-/*   LISP_OBJ_PTR val; */
-/*   LISP_OBJ_PTR fun, params; */
-/*   ENVIRONMENT_PTR fun_env; */
-/*   // switch (to_def->form) { */
-/*   switch(form(to_def)) { */
-/*   case SYMBOL_FORM: */
-/*     // var = to_def->value.atom.symbol_value; */
-/*     var = symbol_value(to_def); */
-/*     // val = car(cdr(args)); */
-/*     val = cadr(args); */
-/*     enter_symbol(env, var, val); */
-/*     return to_def; */
-/*   case CONS_FORM: */
-/*     // var = car(to_def)->value.atom.symbol_value; */
-/*     var = symbol_value(car(to_def)); */
-/*     val = cdr(args); */
-/*     params = cdr(to_def); */
-/*     fun = alloc_obj(); */
-/*     // fun->form = PROCEDURE_FORM; */
-/*     // fun->value.proc.type = DERIVED; */
-/*     // fun->value.proc.env = env; */
-/*     // fun->value.proc.params = params; */
-/*     // fun->value.proc.body = val; */
-/*     form(fun) = PROCEDURE_FORM; */
-/*     proc_type(fun) = DERIVED; */
-/*     proc_env(fun) = env; */
-/*     proc_params(fun) = params; */
-/*     proc_body(fun) = val; */
-/*     enter_symbol(env, var, fun); */
-/*     return car(to_def); */
-/*   } */
-/* } */
 
 LISP_OBJ_PTR define(ENVIRONMENT_PTR env, LISP_OBJ_PTR args) {
   char *var;
