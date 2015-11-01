@@ -193,7 +193,6 @@ LISP_OBJ_PTR define(ENVIRONMENT_PTR env, LISP_OBJ_PTR args) {
       rest_params = cadr(params);
     }
     while (params != nil_ptr && !optional && !rest) {
-      // if (!strcmp(symbol_value(car(params)), "&optional")) {
       if (is_pair(cdr(params)) && !strcmp(symbol_value(cadr(params)), "&optional")) {
         optional = TRUE;
         opt_params = cddr(params);
@@ -236,7 +235,6 @@ LISP_OBJ_PTR set(ENVIRONMENT_PTR env, LISP_OBJ_PTR args) {
   LISP_OBJ_PTR sym = car(args);
   LISP_OBJ_PTR val = car(cdr(args));
 
-  // enter_symbol(env, sym->value.atom.symbol_value, val);
   enter_symbol(env, symbol_value(sym), val);
 
   return val;
@@ -247,11 +245,6 @@ LISP_OBJ_PTR make_lambda(ENVIRONMENT_PTR env, LISP_OBJ_PTR args) {
   LISP_OBJ_PTR fun, params;
   params = car(args);
   fun = alloc_obj();
-  // fun->form = PROCEDURE_FORM;
-  // fun->value.proc.type = DERIVED;
-  // fun->value.proc.env = env;
-  // fun->value.proc.params = params;
-  // fun->value.proc.body = cdr(args);
   form(fun) = PROCEDURE_FORM;
   proc_type(fun) = DERIVED;
   proc_env(fun) = env;
@@ -451,39 +444,30 @@ LISP_OBJ_PTR eq(LISP_OBJ_PTR args) {
 void display(LISP_OBJ_PTR objp) {
   switch (objp->form) {
   case INT_FORM:
-    // printf("%d", objp->value.atom.int_value);
     fprintf(out_stream, "%d", int_value(objp));
     break;
   case FLOAT_FORM:
-    // printf("%g", objp->value.atom.float_value);
     fprintf(out_stream, "%g", float_value(objp));
     break;
   case CHAR_FORM:
-    // printf("#\\%c", objp->value.atom.char_value);
     fprintf(out_stream, "%c", char_value(objp));
     break;
   case STRING_FORM:
-    // printf("\"%s\"", objp->value.atom.string_value);
     fprintf(out_stream, "%s", string_value(objp));
     break;
   case SYMBOL_FORM:
-    // printf("%s", objp->value.atom.symbol_value);
     fprintf(out_stream, "%s", symbol_value(objp));
     break;
   case PROCEDURE_FORM:
-    // printf("<PROCEDURE>");
     fprintf(out_stream, "<PROCEDURE>");
     break;
   case BOOLEAN_FORM:
-    // printf("#%c", objp->value.atom.bool_value ? 't' : 'f');
     fprintf(out_stream, "#%c", bool_value(objp) ? 't' : 'f');
     break;
   case CONS_FORM:
-    // printf("(");
     fprintf(out_stream, "(");
     while (TRUE) {
       print_lispobj(car(objp));
-      // objp = objp->value.cons.cdr;
       objp = cdr(objp);
       if (objp == nil_ptr)
         break;
@@ -492,18 +476,14 @@ void display(LISP_OBJ_PTR objp) {
         print_lispobj(objp);
         break;
       }
-      // printf(" ");
       fprintf(out_stream, " ");
     }
-    // printf(")");
     fprintf(out_stream, ")");
     break;
   case NO_FORM:
-    // printf("no form, boss");
     fprintf(out_stream, "no form, boss");
     break;
   default:
-    // printf("dunno that form %d", objp->form);
     fprintf(out_stream, "dunno that form %d", form(objp));
   }
 }
