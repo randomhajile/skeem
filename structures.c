@@ -225,7 +225,7 @@ void mark_stack() {
 }
 
 void mark_obj(LISP_OBJ_PTR objp) {
-  if (objp == NULL || objp->mark) {
+  if (objp == NULL || is_null(objp) || objp->mark) {
     return;
   }
 
@@ -305,6 +305,9 @@ void pop() {
     if (current_frame->return_ptr != NULL)
       *current_frame->return_ptr = current_frame->result_ptr;
     current_frame->result_ptr = NULL;
+    current_frame->return_ptr = NULL;
+    current_frame->env = NULL;
+    current_frame->args = NULL;
     --current_frame;
   }
   if (next_frame != stack)
