@@ -880,6 +880,7 @@ void eval_args(LISP_OBJ_PTR args) {
       next_code = OP_EVAL;
       next_ret = &(car(current_args));
       next_args = car(args);
+      next_env = current_env;
       push();
       return;
     } else if (!is_proc(car(args))) {
@@ -947,6 +948,7 @@ LISP_OBJ_PTR apply_func(LISP_OBJ_PTR objp) {
   next_code = OP_SAVE;
   next_ret = NULL;
   next_args = current_args;
+  next_env = current_env;
   push();
 
   frame_args((current_frame-1)) = alloc_obj();
