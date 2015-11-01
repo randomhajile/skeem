@@ -545,7 +545,6 @@ void eval_current_frame() {
   case OP_APPLY:
     // This should never be true when called from the interpreter, only possible
     // if apply is called by the user.
-    // this does not allow nullary functions.
     if (!is_pair(current_args) && !is_null(current_args)) {
       return error_msg("ERROR -- second arg to apply must be a list");
     }
@@ -1158,7 +1157,6 @@ void bind_funargs(ENVIRONMENT_PTR env,      // where to store results
   while (req_params != nil_ptr && args != nil_ptr) {
     next_code = OP_DEFINE;
     next_env = env;
-    // next_args = define_args;
     next_ret = NULL;
     // doesn't work if arg n+1's value depends on arg n's value.
     define_args = alloc_obj();
@@ -1199,6 +1197,11 @@ LISP_OBJ_PTR apply_derived(LISP_OBJ_PTR func, LISP_OBJ_PTR args) {
 }
 
 LISP_OBJ_PTR apply_begin() {
+  if (!is_pair(current_args)) {
+    current_res = nil_ptr;
+    return nil_ptr;
+  }
+
   if (cdr(current_args) != nil_ptr) {
     next_ret = NULL;
     next_code = OP_EVAL;
@@ -1215,6 +1218,11 @@ LISP_OBJ_PTR apply_begin() {
 }
 
 LISP_OBJ_PTR apply_let() {
+  if (!is_pair(current_args)) {
+    current_res = nil_ptr;
+    return nil_ptr;
+  }
+
   // we have to be a bit careful here, we probably don't want to fully copy all
   // the args to let, but we don't want to disturb the passed in lists, if we
   // can avoid it.
@@ -1248,6 +1256,10 @@ LISP_OBJ_PTR apply_let() {
 }
 
 LISP_OBJ_PTR apply_if() {
+  if (!is_pair(current_args)) {
+    current_res = nil_ptr;
+    return nil_ptr;
+  }
   // the first value of args should be a boolean that will tell us what to do
   if (is_true(car(current_args))) {
     current_code = OP_EVAL;
@@ -1255,8 +1267,10 @@ LISP_OBJ_PTR apply_if() {
   } else if (cddr(current_args) != nil_ptr) {
     current_code = OP_EVAL;
     current_args = caddr(current_args);
-  } else
+  } else {
     current_res = nil_ptr;
+    return nil_ptr;
+  }
 
   return NULL;
 }
