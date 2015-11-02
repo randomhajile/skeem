@@ -2,6 +2,8 @@
 
 (define (dec n) (- n 1))
 
+(define (list &rest rest) rest)
+
 (define (fib-iter n a b)
   (if (zero? n)
       a
