@@ -186,6 +186,10 @@ LISP_OBJ_PTR define(ENVIRONMENT_PTR env, LISP_OBJ_PTR args) {
     if (is_pair(params) && !strcmp(symbol_value(car(params)), "&optional")) {
       req_params = nil_ptr;
       optional = TRUE;
+      // giving this a try
+      opt_params = cdr(params);
+      cdr(params) = nil_ptr;
+      params = opt_params;
     }
     else if (is_pair(params) && !strcmp(symbol_value(car(params)), "&rest")) {
       req_params = nil_ptr;
