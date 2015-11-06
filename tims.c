@@ -831,21 +831,24 @@ void eval_args(LISP_OBJ_PTR args) {
     return;
 
   switch (current_code) {
-  case OP_QUOTE:
-    current_args = car(current_args);
-    // do not eval any of the args
-    return;
   case OP_BEGIN:
   case OP_LET:
+  case OP_LAMBDA:
+    return;
+  }
+
+  if (!is_pair(current_args))
+    return error_msg("ERROR -- illegal syntax");
+
+  switch (current_code) {
+  case OP_QUOTE:
+    current_args = car(current_args);
     return;
   case OP_DEFINE:
     if (is_symbol(car(args)))
       args = cdr(args);
     else
-      args = nil_ptr;
-    break;
-  case OP_LAMBDA:
-    args = nil_ptr;
+      return;
     break;
   case OP_IF:
     next_ret = &(car(args));
@@ -896,9 +899,10 @@ void eval_args(LISP_OBJ_PTR args) {
       push();
     } else {
       current_code = OP_BEGIN;
+      // alloc env here to avoid GC collection of args
+      current_env = alloc_environment();
       current_func = car(args);
       current_args = proc_body(current_func);
-      current_env = alloc_environment();
       current_env->in_use = TRUE;
       current_env->enclosing_env = proc_env(current_func);
       next_code = OP_BIND;
@@ -1120,6 +1124,7 @@ void bind_funargs(ENVIRONMENT_PTR env,      // where to store results
   LISP_OBJ_PTR opt_params = proc_optparams(func);
   LISP_OBJ_PTR rest_params = proc_restparams(func);
 
+  // TODO: implement opt and rest args here.
   while (req_params != nil_ptr && args != nil_ptr) {
     next_code = OP_DEFINE;
     next_env = env;
@@ -1140,7 +1145,57 @@ void bind_funargs(ENVIRONMENT_PTR env,      // where to store results
     args = cdr(args);
   }
 
-  return;
+  // too few args
+  if (req_params != nil_ptr) {
+    error_msg("ERROR -- too few arguments");
+    return;
+  } else if (is_null(opt_params) && is_null(rest_params) && args != nil_ptr) {
+    error_msg("ERROR -- too many arguments");
+    return;
+  }
+
+  while (opt_params != nil_ptr) {
+    next_code = OP_DEFINE;
+    next_env = env;
+    next_ret = NULL;
+    push();
+    current_args = alloc_obj();
+    define_args = current_args;
+    form(define_args) = CONS_FORM;
+    car(define_args) = car(opt_params);
+    cdr(define_args) = NULL;
+    // TODO: I don't think this is necessary
+    mark_obj(define_args);
+    cdr(define_args) = alloc_obj();
+    form(cdr(define_args)) = CONS_FORM;
+    if (!is_null(args))
+      cadr(define_args) = car(args);
+    else
+      cadr(define_args) = nil_ptr;
+    cddr(define_args) = nil_ptr;
+
+    opt_params = cdr(opt_params);
+    args = cdr(args);
+  }
+
+  // some error stuff should go here
+  if (is_null(rest_params))
+    return;
+
+  next_code = OP_DEFINE;
+  next_env = env;
+  next_ret = NULL;
+  push();
+  current_args = alloc_obj();
+  form(current_args) = CONS_FORM;
+  car(current_args) = proc_restparams(func);
+  cdr(current_args) = alloc_obj();
+  form(cdr(current_args)) = CONS_FORM;
+  cddr(current_args) = nil_ptr;
+  if (is_null(args))
+    cadr(current_args) = nil_ptr;
+  else
+    cadr(current_args) = args;
 }
 
 LISP_OBJ_PTR apply_derived(LISP_OBJ_PTR func, LISP_OBJ_PTR args) {
