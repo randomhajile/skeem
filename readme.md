@@ -1,4 +1,4 @@
-g# Skeem #
+# Skeem #
 ## Description ##
 Skeem is a toy Lisp interpreter implemented in C, which can be seen as the next educational step
 from a lisp interpreter I wrote in [Python](https://github.com/randomhajile/lisp-simulacrum).
