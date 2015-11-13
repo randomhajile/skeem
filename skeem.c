@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "tims.h"
+#include "skeem.h"
 
 // TODO: long strings/symbols
 
