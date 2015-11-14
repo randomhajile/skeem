@@ -21,6 +21,8 @@ A relatively easy to understand Scheme implementation in C.
 I also recommend looking at MiniScheme, available on TinyScheme's [download](http://tinyscheme.sourceforge.net/download.html) page, which is a bit simpler. The
 op codes for Skeem are mostly copied directly from MiniScheme.
 
+## Building ##
+A Makefile has been included for easy building. Simply run `make` in the project directory and then execute `skeem` to run the interpreter.
 
 ## Syntax ##
 The syntax is some combination of Scheme and Common Lisp, leaning more toward Scheme. For example, basic function
